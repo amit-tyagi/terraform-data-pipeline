@@ -1,0 +1,47 @@
+{
+  "Comment": "Well Analytical Record Load ",
+  "StartAt": "Job: MRO_ANALYTICS_WAR",
+  "States": {
+    "Job: MRO_ANALYTICS_WAR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_WAR"
+      },
+      "Next": "Notify Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Notify Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Well Analytical Load (WAR) has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "End": true
+    },
+    "Notify Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Well Analytical Load (WAR) has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Fail"
+    },
+    "Mark as Fail": {
+      "Type": "Fail"
+    }
+  }
+}

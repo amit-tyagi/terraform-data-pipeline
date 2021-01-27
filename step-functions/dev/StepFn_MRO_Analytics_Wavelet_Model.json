@@ -1,0 +1,55 @@
+{
+  "Comment": "Forecast Analytic Load ",
+  "StartAt": "Wavelet Load",
+  "States": {
+    "Wavelet Load": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_WAVELET"
+      },
+      "Next": "Wait 40 sec",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Wait 40 sec": {
+      "Comment": "A Wait state delays the state machine from continuing for a specified time.",
+      "Type": "Wait",
+      "Seconds": 40,
+      "Next": "Notify Success"
+    },
+    "Notify Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Wavelet  Load has been completed Succesfully  ,Thanks"
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Wavelet Load is completed"
+    },
+    "Notify Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Wavelet  Load has been Failed  Thanks"
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Wavelet Load is completed"
+    },
+    "Wavelet Load is completed": {
+      "Type": "Pass",
+      "Result": "",
+      "End": true
+    }
+  }
+}

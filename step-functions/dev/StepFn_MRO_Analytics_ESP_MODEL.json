@@ -1,0 +1,123 @@
+{
+  "Comment": "ESP Model",
+  "StartAt": "Job: Mro_Analytics_Tubing_Components",
+  "States": {
+    "Job: Mro_Analytics_Tubing_Components": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "Mro_Analytics_Tubing_Components"
+      },
+      "Next": "Notify Tubing Job Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Tubing Job Failure"
+        }
+      ]
+    },
+    "Notify Tubing Job Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [Mro_Analytics_Tubing_Components] job has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Job: MRO_ANALYTICS_WAVELET"
+    },
+    "Notify Tubing Job Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [Mro_Analytics_Tubing_Components] job has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Job: MRO_ANALYTICS_WAVELET": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_WAVELET"
+      },
+      "Next": "Notify Wavelet Job Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Wavelet Job Failure"
+        }
+      ]
+    },
+    "Notify Wavelet Job Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [MRO_ANALYTICS_WAVELET] job has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Job: MRO_ANALYTICS_ESP_MODEL"
+    },
+    "Notify Wavelet Job Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [MRO_ANALYTICS_WAVELET] job has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Job: MRO_ANALYTICS_ESP_MODEL": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_ESP_MODEL"
+      },
+      "Next": "Notify Model Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Model Failure"
+        }
+      ]
+    },
+    "Notify Model Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [MRO_ANALYTICS_ESP_MODEL] job has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "End": true
+    },
+    "Notify Model Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [MRO_ANALYTICS_ESP_MODEL] job has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Mark as Failed": {
+      "Type": "Fail"
+    }
+  }
+}

@@ -1,0 +1,108 @@
+{
+    "Comment": "MRO Data Lake Step Function",
+    "StartAt": "Modify & Re-start DMS Tasks",
+    "States": {
+      "Modify & Re-start DMS Tasks": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "mro-dl-dev-modify-and-re-start-dms-task",
+          "Arguments": {
+            "--filename": "table_mapping.json",
+            "--bucket_name": "mro-dl-dev-s3-artifacts",
+            "--folder_name": "glue-scripts",
+            "--in_development": "null",
+            "--meter_daily_task_arn": "arn:aws:dms:us-east-1:259390597249:task:N7W55MDJ6ZY5FYPXOAEIU4WZE4",
+            "--meter_daily_60day_trans_task_arn": "arn:aws:dms:us-east-1:259390597249:task:JDJM6CK7DRWN2IZDZZFR5VKHPI",
+            "--meter_monthly_6month_trans_task_arn": "arn:aws:dms:us-east-1:259390597249:task:IUMD42EL2LPLCG5LRIK7UOK7SU",
+            "--daily_task_arn": "arn:aws:dms:us-east-1:259390597249:task:2BVSV3MCCWCVYIAYDVJD6VS6VI",
+            "--daily_60day_trans_task_arn": "arn:aws:dms:us-east-1:259390597249:task:UMQ3MQPZHVAROUNKTSZGAF77RM",
+            "--monthly_6month_trans_task_arn": "arn:aws:dms:us-east-1:259390597249:task:2DTIWA6FPWUPYW2UW4GHCAXAUQ",
+            "--daily_meter_header_arn": "arn:aws:dms:us-east-1:259390597249:task:5KYVXCTKIVLHKY3RV5545U44FM",
+            "--daily_well_header_arn": "arn:aws:dms:us-east-1:259390597249:task:H53E2FSHPRCC3G55WHZL44VAEA",
+            "--daily_connectb_arn": "arn:aws:dms:us-east-1:259390597249:task:XH2NOBMV76ZXHVKV3LDOLFOLWQ",
+            "--daily_tdm_header_arn": "arn:aws:dms:us-east-1:259390597249:task:WBND3OS4WOORKEZ4OJM7H2E4TU",
+            "--sleep_time_in_seconds": "350"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "IntervalSeconds": 1,
+            "BackoffRate": 3,
+            "MaxAttempts": 2
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "Next": "Error: Not Okay"
+          }
+        ],
+        "Next": "Wait 5 minutes"
+      },
+      "Wait 5 minutes": {
+        "Type": "Wait",
+        "Seconds": 300,
+        "Next": "ETL To Redshift - PCT-DAILY-WELL-DATA-SIXTY-DAY"
+      },
+      "ETL To Redshift - PCT-DAILY-WELL-DATA-SIXTY-DAY": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::glue:startJobRun.sync",
+        "Parameters": {
+          "JobName": "mro-dl-dev-convert-parquet",
+          "Arguments": {
+            "--bucket": "mro-dl-dev-s3-raw",
+            "--prefix": "pct_wellproductionvolumes_sixtyday/PROREPORT/",
+            "--folder": "VW_DAILYWELLDATA",
+            "--out_bucket": "mro-dl-dev-s3-transformed",
+            "--out_path": "processdata/pct-wellproductionvolumes-sixtyday/",
+            "--partitionKey": "productiondate",
+            "--redshift_table_name": "wellproductionvolumes",
+            "--castInteger": "procountid,downtimecode,dtparent",
+            "--timekey": "productiondate"
+          }
+        },
+        "Retry": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "IntervalSeconds": 1,
+            "BackoffRate": 3,
+            "MaxAttempts": 2
+          }
+        ],
+        "Catch": [
+          {
+            "ErrorEquals": [
+              "States.ALL"
+            ],
+            "ResultPath": "$.error",
+            "Next": "Error: Not Okay"
+          }
+        ],
+        "Next": "Confirm Okay"
+      },
+      "Confirm Okay": {
+        "Type": "Succeed",
+        "Comment": "Sucessfully Completed all ETL Tasks"
+      },
+      "Error: Not Okay": {
+        "Type": "Task",
+        "Resource": "arn:aws:states:::sns:publish",
+        "Parameters": {
+          "Subject": "Error: DMS Modify & Re-start Tasks",
+          "TopicArn": "arn:aws:sns:us-east-1:259390597249:mro-dl-dev-east-1-sns-topic-dms-modify-restart-error",
+          "Message": {
+            "Input": "Error Detected While Modifying & Re-starting DMS Tasks!"
+          }
+        },
+        "End": true
+      }
+    }
+  }

@@ -1,0 +1,52 @@
+{
+  "Comment": "EAR Master Load ",
+  "StartAt": "StepFn_MRO_Analytics_ESP_DataProcessing",
+  "States": {
+    "StepFn_MRO_Analytics_ESP_DataProcessing": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync",
+      "Parameters": {
+        "StateMachineArn": "arn:aws:states:us-east-1:259390597249:stateMachine:StepFn_MRO_Analytics_ESP_DataProcessing",
+        "Input": {
+          "StatePayload": "MRO_Analytics_ESP_DataProcessing!",
+          "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+        }
+      },
+      "Next": "StepFn_MRO_Analytics_EAR",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Fail"
+        }
+      ]
+    },
+    "StepFn_MRO_Analytics_EAR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync",
+      "Parameters": {
+        "StateMachineArn": "arn:aws:states:us-east-1:259390597249:stateMachine:StepFn_MRO_Analytics_EAR",
+        "Input": {
+          "StatePayload": "MRO_Analytics_EAR!",
+          "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+        }
+      },
+      "Next": "Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Fail"
+        }
+      ]
+    },
+    "Success": {
+      "Type": "Succeed"
+    },
+    "Fail": {
+      "Type": "Fail"
+    }
+  }
+}

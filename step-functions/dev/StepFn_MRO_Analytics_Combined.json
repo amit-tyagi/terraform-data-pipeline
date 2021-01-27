@@ -1,0 +1,54 @@
+{
+  "Comment": "An example of the Amazon States Language using a parallel state to execute two branches at the same time.",
+  "StartAt": "Parallel",
+  "States": {
+    "Parallel": {
+      "Type": "Parallel",
+      "Next": "Load Completed",
+      "Branches": [
+        {
+          "StartAt": "StepFn_MRO_Analytics_PAR",
+          "States": {
+            "StepFn_MRO_Analytics_PAR": {
+              "Comment": "Start an execution of the Production Analytic Record",
+              "Type": "Task",
+              "Resource": "arn:aws:states:::states:startExecution.sync",
+              "Parameters": {
+                "StateMachineArn": "arn:aws:states:us-east-1:259390597249:stateMachine:StepFn_MRO_Analytics_PAR",
+                "Input": {
+                  "NeedCallback": false,
+                  "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+                }
+              },
+              "OutputPath": "$.Output",
+              "End": true
+            }
+          }
+        },
+        {
+          "StartAt": "StepFn_MRO_Analytics_WAR",
+          "States": {
+            "StepFn_MRO_Analytics_WAR": {
+              "Comment": "Start an execution Well Analytic Record",
+              "Type": "Task",
+              "Resource": "arn:aws:states:::states:startExecution.waitForTaskToken",
+              "Parameters": {
+                "StateMachineArn": "arn:aws:states:us-east-1:259390597249:stateMachine:StepFn_MRO_Analytics_WAR",
+                "Input": {
+                  "NeedCallback": true,
+                  "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id",
+                  "TaskToken.$": "$$.Task.Token"
+                }
+              },
+              "End": true
+            }
+          }
+        }
+      ]
+    },
+    "Load Completed": {
+      "Type": "Pass",
+      "End": true
+    }
+  }
+}

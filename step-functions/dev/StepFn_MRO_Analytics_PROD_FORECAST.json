@@ -1,0 +1,47 @@
+{
+  "Comment": "Production Forecast Model",
+  "StartAt": "MRO_ANALYTICS_PROD_FORECAST",
+  "States": {
+    "MRO_ANALYTICS_PROD_FORECAST": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_PROD_FORECAST"
+      },
+      "Next": "Notify Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Notify Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Production Forecast model has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "End": true
+    },
+    "Notify Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Production Forecast model has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Mark as Failed": {
+      "Type": "Fail"
+    }
+  }
+}

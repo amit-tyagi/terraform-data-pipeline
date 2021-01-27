@@ -1,0 +1,123 @@
+{
+  "Comment": "Equipment Analytical Record Load ",
+  "StartAt": "Job: Mro_ESP_Analytical_Partition_Raw",
+  "States": {
+    "Job: Mro_ESP_Analytical_Partition_Raw": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "Mro_ESP_Analytical_Partition_Raw"
+      },
+      "Next": "Notify Partition Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Partition Failure"
+        }
+      ]
+    },
+    "Notify Partition Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [Mro_ESP_Analytical_Partition_Raw] Job has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Job: Mro_ESP_ACTIVE_Aggregation"
+    },
+    "Notify Partition Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [Mro_ESP_Analytical_Partition_Raw] Job has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Job: Mro_ESP_ACTIVE_Aggregation": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "Mro_ESP_ACTIVE_Aggregation"
+      },
+      "Next": "Notify Aggregation Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Aggregation Failure"
+        }
+      ]
+    },
+    "Notify Aggregation Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [Mro_ESP_ACTIVE_Aggregation] Job has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Job: MRO_ANALYTICS_EAR"
+    },
+    "Notify Aggregation Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The [Mro_ESP_ACTIVE_Aggregation] Job has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Job: MRO_ANALYTICS_EAR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_EAR"
+      },
+      "Next": "Notify EAR Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify EAR Failure"
+        }
+      ]
+    },
+    "Notify EAR Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Equipment Analytical Load (EAR) has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "End": true
+    },
+    "Notify EAR Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Equipment Analytical Load (EAR) has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Mark as Failed": {
+      "Type": "Fail"
+    }
+  }
+}

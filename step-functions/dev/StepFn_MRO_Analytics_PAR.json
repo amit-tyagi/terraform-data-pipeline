@@ -1,0 +1,47 @@
+{
+  "Comment": "Production Analytic Load",
+  "StartAt": "Glue Job: MRO_ANALYTICS_PAR",
+  "States": {
+    "Glue Job: MRO_ANALYTICS_PAR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::glue:startJobRun.sync",
+      "Parameters": {
+        "JobName": "MRO_ANALYTICS_PAR"
+      },
+      "Next": "Notify Success",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Notify Failure"
+        }
+      ]
+    },
+    "Notify Success": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Production Analytical Load (PAR) has been completed."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "End": true
+    },
+    "Notify Failure": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::sns:publish",
+      "Parameters": {
+        "Message": {
+          "Input": "The Production Analytical Load (PAR) has been FAILED."
+        },
+        "TopicArn": "arn:aws:sns:us-east-1:259390597249:MRO_Analytics_Glue_Notification"
+      },
+      "Next": "Mark as Failed"
+    },
+    "Mark as Failed": {
+      "Type": "Fail"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+{
+  "Comment": "PAR and PROD FORECAST Combined",
+  "StartAt": "StepFn_MRO_Analytics_PAR",
+  "States": {
+    "StepFn_MRO_Analytics_PAR": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync",
+      "Parameters": {
+        "StateMachineArn": "arn:aws:states:us-east-1:259390597249:stateMachine:StepFn_MRO_Analytics_PAR",
+        "Input": {
+          "StatePayload": "MRO_Analytics_PAR!",
+          "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+        }
+      },
+      "Next": "StepFn_MRO_Analytics_PROD_FORECAST",
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Mark as Failed"
+        }
+      ]
+    },
+    "StepFn_MRO_Analytics_PROD_FORECAST": {
+      "Type": "Task",
+      "Resource": "arn:aws:states:::states:startExecution.sync",
+      "Parameters": {
+        "StateMachineArn": "arn:aws:states:us-east-1:259390597249:stateMachine:StepFn_MRO_Analytics_PROD_FORECAST",
+        "Input": {
+          "StatePayload": "StepFn_MRO_Analytics_PROD_FORECAST!",
+          "AWS_STEP_FUNCTIONS_STARTED_BY_EXECUTION_ID.$": "$$.Execution.Id"
+        }
+      },
+      "End": true,
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL"
+          ],
+          "Next": "Mark as Failed"
+        }
+      ]
+    },
+    "Mark as Failed": {
+      "Type": "Fail"
+    }
+  }
+}
